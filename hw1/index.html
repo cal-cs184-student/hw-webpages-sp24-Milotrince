@@ -1,7 +1,293 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Homework 1 index.html here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+
+    img {
+      max-width: 100%;
+    }
+  </style>
+  <title>CS 184/284A Rasterizer</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+  <h1 align="middle">CS 184/284A: Computer Graphics and Imaging, Spring 2024</h1>
+  <h1 align="middle">Homework 1: Rasterizer</h1>
+  <h2 align="middle">Trinity Chung, Oliver Ni</h2>
+
+  <h3 align="middle">
+    <a href="https://milotrince.github.io/cs184-project-site/">https://milotrince.github.io/cs184-project-site/</a>
+  </h3>
+
+  <br><br>
+
+  <div>
+
+    <h2 align="middle">Overview</h2>
+    <p>
+      We built a rasterization pipeline!
+      We started from the basics, encountered many a jaggie,
+      and gradually added features that finally resulted in a
+      jaggie-less final output able to render shapes and textures.
+      It was interesting to walk through the thought process of
+      what the first computer graphics inventors thought of when
+      designing the pipeline.
+    </p>
+
+    <h2 align="middle">Section I: Rasterization</h2>
+
+    <h3 align="middle">Part 1: Rasterizing single-color triangles</h3>
+
+    <p>A triangle is made of 3 lines, each line splitting the plane into two halves. By
+      checking that a point lies on the same side (above/below for
+      clockwise/counterclockwise) of all three lines, we can determine that the point
+      lies inside the triangle.</p>
+
+    <p>Only points which fall inside the bounding box of the triangle are checked, so
+      our runtime is the same as (no worse than) checking each sample in the bounding
+      box.</p>
+
+    <p><img src="./images/part1.png" alt="task1.png"></p>
+
+    <h3 id="extra-credit-optimization">Extra Credit: Optimization</h3>
+    <p>One area of the triangle rasterization algorithm that could be optimized is the
+      triangle checks. Even though we&#39;re limiting the checking to the bounding box, we
+      are still checking whether every single point inside the bounding box is a part
+      of the triangle or not. Intuitively, we don&#39;t need to do this; we can simply
+      &quot;follow the edges&quot; of the triangle, and once we&#39;ve established that, we can
+      indiscriminately fill in the rest of the triangle.</p>
+    <p>For the special case of a triangle that has one &quot;flat&quot; edge (parallel to the
+      x-axis), and two &quot;slanted&quot; edges, this is pretty simple: we can simply loop
+      through all possible y-values in the bounding box, and use the line equation to
+      interpolate where that horizontal line intersects the two slanted edges. Then,
+      we can simply fill in the pixels between those two points.</p>
+    <p>Now, for the key part: given <em>any</em> triangle, we can always split it into two
+      triangles that each have a &quot;flat&quot; edge. To split the triangles, we first sort
+      the points by y-coordinate, then interpolate the middle point&#39;s y-coordinate to
+      find the x-coordinate of the intersection with the other two points. This gives
+      us two triangles, each with a &quot;flat&quot; edge. Then, we can use the algorithm
+      described in the above paragraph to fill in the pixels for each of these two
+      triangles.</p>
+    <p>Attached is a picture of the optimized algorithm in action. We did this part
+      very close to the deadline, so it is still a little buggy — note the random
+      horizontal lines that show up occasionally — but works for the most part.</p>
+    <p>Using <code>clock()</code>, we performed some simple benchmarks for the initial render.
+      With the original algorithm, it took an average of 17830 clicks (0.017830
+      seconds) to render the image. With the optimized algorithm, it took an average
+      of 3242 clicks (0.003242 seconds) to render the image. This is a 5.5x speedup.</p>
+
+    <img src="./images/part1-optimized.png" alt="">
+
+    <h3 align="middle">Part 2: Antialiasing triangles</h3>
+
+    <p>First, the size of the sample buffer is adjusted based on the sampling rate
+      (<code>width * height * sample_rate</code>). Next, each triangle is rasterized as normal. Finally, when resolving
+      the
+      frame buffer, we
+      take an average of the pixels; e.g. when <code>sample_rate = 4</code>,
+      <code>pixel[0] = 1/4 * (sample_buffer[0] + sample_buffer[1] + sample_buffer[2] + sample_buffer[3])</code>.
+    </p>
+    <p>
+    <table>
+      <tr>
+        <td>
+          <img src="./images/part2-1x.png" alt="">
+        </td>
+        <td>
+          <img src="./images/part2-2x.png" alt="">
+        </td>
+        <td>
+          <img src="./images/part2-4x.png" alt="">
+        </td>
+      </tr>
+    </table>
+    <p>Without any supersampling (sample rate = 1), we see jaggies. As the sampling rate increases, we observe that the
+      jaggies are smoothed over with a blurred effect, since the average color over the local area is used. Zoomed in,
+      we
+      can see the distinct gradient of red to white along the edge, but zoomed out, the edge of the triangle appears
+      smooth.
+    </p>
+
+    <h3 align="middle">Part 3: Transforms</h3>
+
+    <p>Here is our correctly rendered cubeman:
+      <img src="./images/part3.png" alt="">
+    </p>
+    <p>and here is our happy cubecs184student. They are dancing and wearing a skirt.
+      <img src="./images/part3-custom.png" alt="">
+    </p>
+    <h3 id="extra-credit">Extra Credit</h3>
+    <p>We also implemented rotating the viewport. First we added additional keyboard events for &#39;Q&#39; and
+      &#39;E&#39;
+      to move the viewport on press. For <code>move_view</code> and <code>set_view</code> functions, we added an
+      additional
+      parameter <code>float rotation_deg</code>, and we apply rotation using the rotate matrix defined in
+      <code>transforms.cpp</code>.
+      <img src="./images/part3-rotated.png" alt="">
+    </p>
+
+    <h2 align="middle">Section II: Sampling</h2>
+
+
+    <h3 align="middle">Part 4: Barycentric coordinates</h3>
+
+    <p>Barycentric coordinates in a triangle are based on a point&#39;s relative distance to
+      other points in the triangle. The example triangle below has vertices red, green,
+      and blue. Using interpolation based on the Barycentric coordinates, we smoothly
+      blend the color such that points closer to the red vertex are more red, and
+      linearly decrease in red value for further points. To be more exact, we define
+      values <code>alpha</code>, <code>beta</code>, and <code>gamma</code> as the distance from each altitude&#39;s base
+      as
+      a percentage (value 0 to 1), such that <code>alpha</code> + <code>beta</code> + <code>gamma</code> = 1. Then to
+      interpolate color value between points, we can simply calculate
+      <code>alpha * A + beta * B + gamma * C</code> where <code>A</code>, <code>B</code>, <code>C</code> are the values
+      at
+      each
+      vertex.
+    </p>
+    <p><img src="./images/part4-barycentric.png" alt=""></p>
+    <p>Here is <code>svg/basic/test7.svg</code> rendered smoothly using Barycentric interpolation.
+      <img src="./images/part4.png" alt="">
+    </p>
+
+    <h3 align="middle">Part 5: "Pixel sampling" for texture mapping</h3>
+
+    <p>Texture pixel sampling is how we render a texture (image) onto a surface (many
+      triangles). The challenge is that the locations/coordinates of the texture
+      pixels do not align exactly with the pixels we want to render on the screen.
+      The most straightforward way to resolve this is nearest sampling, where the
+      color value of the closest pixel in the texture coordinates is used. A better
+      way is bilinear sampling, where we interpolate the color based on the 4
+      closest pixels. The effects of bilinear sampling is most prominent on high
+      frequency areas (quickly changing, narrow strips of color), where you can clearly
+      see the smoothing effect.</p>
+    <p><img src="./images/part5-nearest.png" alt="">
+      <img src="./images/part5-bilinear.png" alt="">
+    </p>
+    <p>Bilinear sampling has a tendency to wash out the true color in these scenarios,
+      but it &quot;defeats&quot; nearest sampling in the sense that the general shapes and
+      patterns in the bilinear sampled image are closer to the original image than in
+      nearest sampling, where fine-grained details can often be lost.</p>
+    <p>Below images are nearest with 1 spp, nearest with 16 spp, bilinear with 1 spp,
+      bilinear with 16 spp. We note that the texture sampling method affects pixels
+      within the triangle while supersampling affects pixels along the edges of the
+      triangle.</p>
+    <p>
+    <table>
+      <thead>
+        <tr>
+          <td></td>
+          <td>
+            1 samples per point
+          </td>
+          <td>
+            16 samples per point
+          </td>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td>nearest</td>
+          <td>
+            <img src="./images/part5-nearest-1.png" alt="">
+          </td>
+          <td>
+            <img src="./images/part5-nearest-16.png" alt="">
+          </td>
+        </tr>
+        <tr>
+          <td>bilinear</td>
+          <td>
+            <img src="./images/part5-bilinear-1.png" alt="">
+          </td>
+          <td>
+            <img src="./images/part5-bilinear-16.png" alt="">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    </p>
+
+
+    <h3 align="middle">Part 6: "Level sampling" with mipmaps for texture mapping</h3>
+
+    <p>Mipmaps store a texture at multiple different resolutions. Using the appropriate
+      level texture when rendering reduces aliasing effects and improves efficiency.
+      For example, for rendering an image minimized in screen space, using a lower
+      resolution texture means the full high resolution texture does not have to be
+      loaded. The approach of using the appropriate mip level texture for each triangle
+      is <code>nearest</code> level sampling. However, this can create aliasing effects at the
+      boundaries of mip levels.
+      To smoothly transition in between level boundaries, the <code>bilinear</code> sampling method
+      loads the two closest mip levels and linearly interpolating between them.
+      In the bilinear sampled image, the aliasing is no
+      longer visible. Of course, the tradeoff is that <code>bilinear</code> sampling uses more
+      memory since it requires two mip levels to be loaded, and slower since an additional
+      lerp has to be calculated. In comparison, <code>nearest</code> loads one mip and performs one
+      lookup. In terms of memory usage, <code>nearest</code> would be more efficient than <code>level0</code>
+      where the full resolution image is always used.</p>
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>debug</th>
+          <th>nearest</th>
+          <th>bilinear</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>level0</td>
+          <td><img src="./images/part6-level0-debug.png" alt=""></td>
+          <td><img src="./images/part6-level0-nearest.png" alt=""></td>
+          <td><img src="./images/part6-level0-bilinear.png" alt=""></td>
+        </tr>
+        <tr>
+          <td>nearest</td>
+          <td><img src="./images/part6-nearest-debug.png" alt=""></td>
+          <td><img src="./images/part6-nearest-nearest.png" alt=""></td>
+          <td><img src="./images/part6-nearest-bilinear.png" alt=""></td>
+        </tr>
+        <tr>
+          <td>bilinear</td>
+          <td><img src="./images/part6-bilinear-debug.png" alt=""></td>
+          <td><img src="./images/part6-bilinear-nearest.png" alt=""></td>
+          <td><img src="./images/part6-bilinear-bilinear.png" alt=""></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 align="middle">Section III: Art Competition</h2>
+
+    <h3 align="middle">Part 7: Draw something interesting!</h3>
+    We procedurally generated the vaporwave background (sin waves using polyline)
+    and drew a texture our favorite professor, rendered in trilinear interpolation with 16 supersampling.
+    <p><img src="./images/vaporren.png" alt=""></p>
+
+
+</body>
+
 </html>
