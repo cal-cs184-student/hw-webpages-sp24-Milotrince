@@ -1,7 +1,356 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Homework 2 index.html here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      background-color: white;
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+
+    img {
+      max-width: 100%;
+    }
+
+    kbd {
+      color: #121212;
+    }
+  </style>
+  <title>CS 184 Mesh Edit</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+  </script>
+
+</head>
+
+
+<body>
+
+  <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2018</h1>
+  <h1 align="middle">Project 2: Mesh Edit</h1>
+  <h2 align="middle">Trinity Chung, Oliver Ni</h2>
+  <h2 align="middle">trinityc@berkeley.edu, oliverni@berkeley.edu</h2>
+
+  <br><br>
+
+  <div>
+
+    <h2 align="middle">Overview</h2>
+    <p>
+      In this homework we implemented curves and subdivision in 2D, up to 3D mesh subdivision.
+      Now we can view and render smooth meshes, which is the advancement that made animations like
+      Gery's Game possible!
+    </p>
+    <br>
+
+
+    <h2 align="middle">Section I: Bezier Curves and Surfaces</h2>
+
+    <h3 align="middle">Part 1: Bezier Curves with 1D de Casteljau Subdivision</h3>
+
+
+    <b>
+      Briefly explain de Casteljau's algorithm and how you implemented it in order to evaluate Bezier curves.
+    </b>
+    <p>De Casteljau&#39;s algorithm is a simple recursive method for evaluating Bezier
+      curves. Given a Bezier curve with $N$ control points and some desired parameter
+      $t \in [0, 1]$ on the curve, we can map each &quot;segment&quot; (i.e. pair of consecutive
+      control points) into a new point by traveling $t$ of the way from the first
+      control point to the second. This can be easily computed as a weighted average,
+      and leaves us with a set of $N-1$ points. It turns out that these points form a
+      new Bezier curve that coincides exactly with the old one, so we can simply
+      repeat the process until we have only one point left. This point is the value of
+      the Bezier curve at the parameter $t$.</p>
+    <p>We picked a Bezier curve of six points. Shown is a progression of the algorithm:</p>
+    <table>
+      <tbody>
+        <tr>
+          <td><img src="images/task1-0.png" alt=""></td>
+          <td><img src="images/task1-1.png" alt=""></td>
+          <td><img src="images/task1-2.png" alt=""></td>
+        </tr>
+        <tr>
+          <td><img src="images/task1-3.png" alt=""></td>
+          <td><img src="images/task1-4.png" alt=""></td>
+          <td><img src="images/task1-5.png" alt=""></td>
+        </tr>
+      </tbody>
+    </table>
+    <p><img src="images/task1-c.png" alt=""></p>
+    <p>Here&#39;s a slightly different curve evaluated at a different parameter:</p>
+    <p><img src="images/task1-other.png" alt=""></p>
+
+
+    <h3 align="middle">Part 2: Bezier Surfaces with Separable 1D de Casteljau</h3>
+    <b>
+      Briefly explain how de Casteljau algorithm extends to Bezier surfaces and how you implemented it in order to
+      evaluate Bezier surfaces.
+    </b>
+    <p>Bezier surfaces are specified by a grid of N by M control points. The de
+      Casteljau algorithm can be extended to evaluate not only Bezier curves, but
+      Bezier surfaces as well. By applying the algorithm to each row, we obtain a new
+      set of control points. We can then apply the algorithm to these new control
+      points to obtain the value of the Bezier surface at the desired parameter. Turns
+      out, the algorithm works the same whether we evaluate rows first or columns
+      first.</p>
+    <p>Here is a picture of the teapot being rendered:</p>
+    <p><img src="images/task2-empty.png" alt=""></p>
+    <p><img src="images/task2-filled.png" alt=""></p>
+    <br>
+
+    <h2 align="middle">Section II: Triangle Meshes and Half-Edge Data Structure</h2>
+
+    <h3 align="middle">Part 3: Area-Weighted Vertex Normals</h3>
+
+    <b>
+      Briefly explain how you implemented the area-weighted vertex normals.
+    </b>
+    <p>Implementing the area-weighted vertex normals was fairly straightforward, since
+      <code>Face::normal()</code> was already provided to us. The most complex thing we had to do
+      was to figure out how to compute the area of a triangle. We used the formula
+      $A = \frac{\lVert \mathbf{AB} \times \mathbf{AC} \rVert}{2}$, which we
+      implemented in C++ using the provided <code>cross</code> and <code>norm</code> utilities.
+    </p>
+    <p>From there, we iterated through each edge connected to the vertex by repeatedly
+      taking <code>twin()-&gt;next()</code>, multiplying the result of our area utility function as
+      well as the provided <code>Face::normal()</code> function, and summing the results. We then
+      normalized the sum and returned it.</p>
+    <p>Here is a picture of the teapot without the normals used:</p>
+    <p><img src="images/task3-without.png" alt=""></p>
+    <p>And here is a picture of the teapot with the normals used:</p>
+    <p><img src="images/task3-with.png" alt=""></p>
+    <br>
+
+
+    <h3 align="middle">Part 4: Edge Flip</h3>
+    <b>
+      Briefly explain how you implemented the edge flip operation and describe any interesting implementation /
+      debugging tricks you have used.
+    </b>
+    <p>Implementing the edge flip was a bit more challenging. At first, it seemed like
+      it would be a lot of work to keep track of all the pointers and make sure
+      everything was consistent. However, after rethinking about the problem in terms
+      of &quot;what are the new triangles&quot;, we settled on the following:</p>
+    <p><img src="images/task4-diagram.jpg" alt=""></p>
+    <p>For a given edge <code>ha</code> and its twin <code>hb</code> shown above (edges labeled at their
+      starting vertex), if we shorten <code>-&gt;next()</code> to <code>.N</code>, the new triangles should be
+      the following:</p>
+    <ul>
+      <li><code>ha</code> → <code>hb.NN</code> → <code>ha.N</code></li>
+      <li><code>hb</code> → <code>ha.NN</code> → <code>hb.N</code></li>
+    </ul>
+    <p>We can set the <code>next</code> and <code>face</code> pointers accordingly. Furthermore, the vertex
+      of <code>ha</code> should be updated to that of <code>ha.N.N</code> and the vertex of <code>hb</code> should be
+      updated to that of <code>hb.N.N</code>.</p>
+    <p>Lastly, we had to make sure that all the pointers pointing back to each halfedge
+      were updated as well. This was a bit tricky to approach at first, but we avoided
+      having to think too hard about exactly what changed by simply updating every
+      single pointer.</p>
+    <p>Here&#39;s some screenshots of edge flips!</p>
+    <table>
+      <tbody>
+        <tr>
+          <td><img src="images/task4-0.png" alt=""></td>
+          <td><img src="images/task4-1.png" alt=""></td>
+          <td><img src="images/task4-2.png" alt=""></td>
+        </tr>
+      </tbody>
+    </table>
+    <p>With careful planning, a potentially frustrating debugging journey was
+      thankfully avoided 🙂</p>
+    <br>
+
+
+    <h3 align="middle">Part 5: Edge Split</h3>
+
+    <p>Once again, by drawing out a diagram and breaking down the steps beforehand,
+      implementing edge split was fairly straightforward.
+      We call the halfedges associated with the edge to be split <code>ha</code> and <code>hb</code>. A new vertex is
+      created at the midpoint of the edge being split, and the vertices and new faces created by this
+      operation are assigned.</p>
+    <p>EC: We also implemented edge split for boundary edges.
+      If both half-edges of the edge are boundary edges, then there is no splitting to be done.
+      In the case that one of <code>ha</code> or <code>hb</code> is a boundary, then we add a new vertex and create only
+      one new triangle face instead of two additional faces from having vertices on either side.</p>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Before split</th>
+          <th>After split</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sketch</td>
+          <td><img src="images/task5-before-sketch.png" alt=""></td>
+          <td><img src="images/task5-after-sketch.png" alt=""></td>
+        </tr>
+        <tr>
+          <td>Simple mesh</td>
+          <td><img src="images/task5-before.png" alt=""></td>
+          <td><img src="images/task5-after.png" alt=""></td>
+        </tr>
+        <tr>
+          <td>Splits and flips</td>
+          <td><img src="images/task5-split-flip-before.png" alt=""></td>
+          <td><img src="images/task5-split-flip-after.png" alt=""></td>
+        </tr>
+        <tr>
+          <td>EC: Boundary split</td>
+          <td><img src="images/task5-ec-before.png" alt=""></td>
+          <td><img src="images/task5-ec-after.png" alt=""></td>
+        </tr>
+      </tbody>
+    </table>
+
+
+
+    <h3 align="middle">Part 6: Loop Subdivision for Mesh Upsampling</h3>
+
+
+    <p>We followed the suggested steps of first computing all the new positions for
+      vertices and edges and storing them in the <code>newPosition</code> variable. Next to split
+      the edges, we create reference to all the original edges to ensure we don&#39;t loop
+      indefinitely, and <code>splitEdge()</code> these edges. We had to modify <code>splitEdge()</code>
+      slightly since the original implementation was correct but inconsistent since it
+      moved the original edges, so we had to swap the original edges back to their
+      positions. This was a tricky one to debug but we were able to observe what was
+      happening by viewing the teapot mesh which has more regular/flat edges to begin
+      with. Then, we flip the edges connecting an old and new vertex, and finally copy
+      the vertices&#39; stored <code>newPosition</code>s into <code>position</code></p>
+    <p>The loop subdivision on its own can still result in some &quot;sharp&quot; corners if the
+      original mesh had a sharp corner or vertices with a high index. The provided
+      <code>cube.dae</code> for example does not have regular vertex degrees, resulting in a
+      slightly pointy pillow-like cuboid (left). If we first manually preprocess the
+      cube and regularize vertex degrees by flipping edges, then we can obtain a
+      rounder shape.
+    </p>
+    <h3 id="extra-credit-boundary-support">Extra Credit: Boundary support</h3>
+    <p>We also implemented boundary checks such that boundary edges are preserved and
+      not moved or smoothed. See beetle below. Boundary vertices do not move, and
+      boundary edges are split in the middle instead of using the Loop formula.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Cube</th>
+          <th>Preprocessed cube</th>
+          <th>Beetle boundary case</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><img src="images/task6-pillow1.png" alt=""></td>
+          <td><img src="images/task6-reg1.png" alt=""></td>
+          <td><img src="images/task6-beetle1.png" alt=""></td>
+        </tr>
+        <tr>
+          <td><img src="images/task6-pillow2.png" alt=""></td>
+          <td><img src="images/task6-reg2.png" alt=""></td>
+          <td><img src="images/task6-beetle2.png" alt=""></td>
+        </tr>
+        <tr>
+          <td><img src="images/task6-pillow3.png" alt=""></td>
+          <td><img src="images/task6-reg3.png" alt=""></td>
+          <td><img src="images/task6-beetle3.png" alt=""></td>
+        </tr>
+        <tr>
+          <td><img src="images/task6-pillow4.png" alt=""></td>
+          <td><img src="images/task6-reg4.png" alt=""></td>
+          <td><img src="images/task6-beetle4.png" alt=""></td>
+        </tr>
+        <tr>
+          <td><img src="images/task6-pillow5.png" alt=""></td>
+          <td><img src="images/task6-reg5.png" alt=""></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><img src="images/task6-pillow6.png" alt=""></td>
+          <td><img src="images/task6-reg6.png" alt=""></td>
+        </tr>
+      </tbody>
+    </table>
+    <h3 id="extra-credit-sqrt-3-subdivision">Extra Credit: $\sqrt{3}$ subdivision</h3>
+    <p>We also implemented the $\sqrt{3}$ subdivision scheme. The main difference is
+      that each triangle get split into three new triangles, instead of four, so there
+      is a different splitting and smoothing formula.</p>
+    <p>First, we had to implement &quot;face splitting&quot;. Instead of splitting an edge,
+      forming two new edges, we can split a face, forming three new edges, by adding a
+      new vertex at the midpoint of the face. Then, we can draw edges to the existing
+      vertices of the triangle. See this example below:</p>
+    <p><img src="images/task6-ec-split-face.png" alt="Face split"></p>
+    <p>After splitting every face, we&#39;re now left with some irregularly shaped
+      triangles — the next step is to flip each original edge so that the triangles
+      are regular-sized again. This leaves us with three times the number of old
+      triangles, but slightly finer grained.</p>
+    <p>Lastly, we had to implement the $\sqrt{3}$ smoothing formula. The new vertices
+      are already placed at the averages of the neighboring vertices, so we just had
+      to adjust the old vertices. This is accomplished using the formula</p>
+    <p>$\alpha_n = \frac{4 - 2 \cos(2 \pi / n)}{9} \quad S(p) = (1 - \alpha_n) p + \alpha_n \frac{1}{n} \sum_{i=0}^{n-1} p_i$ </p>
+    <p>where $p$ is the old vertex, $p_i$ are the neighboring vertices, and $n$ is the
+      degree of the vertex. We implemented this in C++ and applied it to the vertices.</p>
+    <p>Now, we had a working $\sqrt{3}$ subdivision scheme! In our program, you can
+      press <code>L</code> to use the Loop subdivision, or press <code>M</code> to use the $\sqrt{3}$
+      subdivision. Here are some comparisons between the existing Loop subdivision
+      scheme and the new $\sqrt{3}$ scheme:</p>
+    <p><img src="images/task6-ec-icosahedron.png" alt=""></p>
+    <p><img src="images/task6-ec-teapot.png" alt=""></p>
+    <p>The Loop subdivision scheme is on the left, and the $\sqrt{3}$ scheme is on the
+      right. The $\sqrt{3}$ scheme produces less triangles, so it might be more
+      desirable for complex models.</p>
+
+    <h3 align="middle">Part 7 (Optional, Possible Extra Credit)</h3>
+    <b>
+      Save your best polygon mesh as partsevenmodel.dae in your docs folder and show us a screenshot of the mesh in your
+      write-up.
+    </b>
+    <p>
+      TBD
+    </p>
+    <br>
+
+
+    <b>
+      Include a series of screenshots showing your original mesh and your mesh after one and two rounds of subdivision.
+      If you have used custom shaders, include screenshots of your mesh with those shaders applied as well.
+    </b>
+    <p>
+      TBD
+    </p>
+    <br>
+
+
+    <b>
+      Describe what you have done to enhance your mesh beyond the simple humanoid mesh described in the tutorial.
+    </b>
+    <p>
+      TBD
+    </p>
+    <br>
+
+
+</body>
+
 </html>
