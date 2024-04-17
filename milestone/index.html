@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      background-color: white;
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+
+    img,
+    video {
+      max-width: 100%;
+    }
+
+    kbd {
+      color: #121212;
+    }
+  </style>
+  <title>CS 184 Fluid Pong: Milestone</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+  </script>
+
+</head>
+
+
+<body>
+
+  <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2024</h1>
+  <h1 align="middle">FluidPong: Milestone</h1>
+  <h2 align="middle">Trinity Chung, Anna Dymchenko, Oliver Ni, Tiffany Sun</h2>
+  <h3 align="middle">
+    <a href="https://cal-cs184-student.github.io/hw-webpages-sp24-oliver-trinity/milestone/">
+      https://cal-cs184-student.github.io/hw-webpages-sp24-oliver-trinity/milestone/
+    </a>
+  </h3>
+
+  <br><br>
+
+  <div>
+    <p align="middle">
+      <iframe
+        src="https://docs.google.com/presentation/d/e/2PACX-1vTQ6_dG-hq5RH434CnaCCcsBOOtxrCnGD5rbzvyQ4p38VsX2gwbxiadZ8nqsVhl3DERD4g_tlAViE7q/embed?start=true&loop=true&delayms=3000"
+        frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true"
+        webkitallowfullscreen="true"></iframe>
+    </p>
+
+    <p>
+      Link to slides: <a
+        href="https://docs.google.com/presentation/d/1c8SNqwCMYDlIjJLUUo8TMi4K9p8eQGq_Rw8kTFmvSWY/edit?usp=sharing">https://docs.google.com/presentation/d/1c8SNqwCMYDlIjJLUUo8TMi4K9p8eQGq_Rw8kTFmvSWY/edit?usp=sharing</a>
+    </p>
+
+    <p><img src="images/first_fluidpong_large.png" alt="milestone fluidpong"></p>
+
+    <h2 id="preliminary-progress">Preliminary Progress</h2>
+
+    <p>We implemented a simplified FluidPong in Rust!</p>
+
+    <table>
+      <tbody>
+        <tr>
+          <td>FluidPong</td>
+          <td>Metaball Shader</td>
+        </tr>
+        <tr>
+          <td>
+            <video controls autoplay width="400">
+              <source src="images/first_fluidpong.mp4" type="video/mp4">
+              video not supported :(
+            </video>
+          </td>
+          <td>
+            <video controls autoplay width="400">
+              <source src="images/metaball_speed_density.mp4" type="video/mp4">
+              video not supported :(
+            </video>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Currently, ball applies force on fluid but not vice versa.
+      We are currently using Smoothed-Particle Hydrodynamics (SPH) with a metaball shader, with color based on speed and
+      opacity based on density.</p>
+
+
+    <h2 id="reflections">Reflections</h2>
+    <p>The challenging part of this project of course is not Pong, but making the Fluid look more interesting.
+      Now that we are more familiar with writing graphics in Rust, we wish to try implementing a more advanced fluid
+      such as Naiver-Stokes, or potentially simulating 3d and projecting onto 2d.</p>
+
+    <h2 id="updated-work-plan">Updated Work Plan</h2>
+    <ul>
+      <li>Try Naiver-Stokes fluid simulation in addition to SPH.</li>
+      <li>Improve the shader.</li>
+      <li>Investigate speed-ups.</li>
+      <li>Make pong paddles and ball interact with fluid more intimately.</li>
+    </ul>
+
+
+</body>
+
+</html>
